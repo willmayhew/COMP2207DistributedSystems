@@ -22,11 +22,11 @@ public class Controller {
 
         try{
             ServerSocket ss = new ServerSocket(cport);
-            System.out.println("Listening on port " + cport);
+            System.out.println("Controller listening on port " + cport);
             for(;;){
                 try{
                     Socket client = ss.accept();
-                    System.out.println("Connected");
+                    System.out.println("Controller Connected");
                     BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                     PrintWriter out = new PrintWriter(client.getOutputStream(), true);
                     String line;
@@ -99,7 +99,11 @@ public class Controller {
      * @param filesize size of file to store
      */
     private static void store(PrintWriter out, String filename, int filesize){
-
+        String message = "STORE_TO";
+        for(int i=0; i<dstoreList.size(); i++){
+            message = message + dstoreList.get(i) + " ";
+        }
+        out.println(message);
     }
 
     private static void rebalance(){
