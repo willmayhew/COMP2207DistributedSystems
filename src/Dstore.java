@@ -13,10 +13,15 @@ public class Dstore {
     private static int fileSize;
 
     public static void main(String[] args){
-        port = Integer.parseInt(args[0]);
-        cport = Integer.parseInt(args[1]);
-        timeout = Integer.parseInt(args[2]);
-        filePath = args[3];
+//        port = Integer.parseInt(args[0]);
+//        cport = Integer.parseInt(args[1]);
+//        timeout = Integer.parseInt(args[2]);
+//        filePath = args[3];
+
+        port = 10001;
+        cport = 12345;
+        timeout = 5000;
+        filePath = "bruh";
 
         try{
             ServerSocket ss = new ServerSocket(port);
@@ -44,7 +49,8 @@ public class Dstore {
                                     fileName = message[1];
                                     fileSize = Integer.parseInt(message[2]);
                                     sendACK(out);
-                                    getFiles(client.getInputStream(), fileSize);
+                                    storeFile(client.getInputStream(), fileSize);
+                                    sendStoreACK(cOut, fileName);
                             }
                         }
 
@@ -65,11 +71,20 @@ public class Dstore {
     }
 
     /**
+     * Send acknowledgment message to controller
+     * @param out Writer communicating with controller
+     * @param fileName File name
+     */
+    private static void sendStoreACK(PrintWriter out, String fileName){
+        out.println("STORE_ACK " + fileName);
+    }
+
+    /**
      * Receives the file from the client
      * @param in InputStream from client
      * @param fileSize Size of file
      */
-    private static void getFiles(InputStream in, int fileSize){
+    private static void storeFile(InputStream in, int fileSize){
         try{
             byte[] buf = new byte[fileSize];
             in.readNBytes(buf,0,buf.length);
