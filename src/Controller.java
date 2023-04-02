@@ -1,3 +1,5 @@
+import jdk.swing.interop.SwingInterOpUtils;
+
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ public class Controller {
                     System.out.println("Controller Connected");
 
                     new Thread(() -> {
+                        int portIndex = 0;
                         try{
                             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                             PrintWriter out = new PrintWriter(client.getOutputStream(), true);
@@ -51,8 +54,7 @@ public class Controller {
                                             if(enoughDstores()){
                                                 listFiles(out);
                                             } else{
-                                                out.println("ERROR_NOT_ENOUGH_DSTORES");
-                                                System.out.println("Command sent: ERROR_NOT_ENOUGH_DSTORES");
+                                                errorNotEnoughDstores(out);
                                             }
 
                                         }
@@ -66,25 +68,30 @@ public class Controller {
                                                 if(!index.fileExists(message[1])){
                                                     store(out, message[1], Integer.parseInt(message[2]));
                                                 } else{
-                                                    out.println("ERROR_FILE_ALREADY_EXISTS");
-                                                    System.out.println("Command sent: ERROR_FILE_ALREADY_EXISTS");
+                                                    errorFileAlreadyExists(out);
                                                 }
                                             } else{
-                                                out.println("ERROR_NOT_ENOUGH_DSTORES");
-                                                System.out.println("Command sent: ERROR_NOT_ENOUGH_DSTORES");
+                                                errorNotEnoughDstores(out);
                                             }
                                         }
                                         break;
                                     case "LOAD":
                                         //client load
-                                        int fileSize = index.getFileSize(message[1]);
-                                        loadFile(out, fileSize);
-                                        break;
-                                    case "LOAD_DATA":
-                                        //client load data
+                                        if(dstoreList.size() != 0){
+                                            loadFile(out, getPort(portIndex), message[1]);
+                                        } else{
+                                            errorNotEnoughDstores(out);
+                                        }
                                         break;
                                     case "RELOAD":
                                         //client reload
+                                        portIndex++;
+                                        if(dstoreList.size() > portIndex){
+                                            loadFile(out, getPort(portIndex), message[1]);
+                                        } else{
+                                            out.println("ERROR_LOAD");
+                                            System.out.println("Command sent: ERROR_LOAD");
+                                        }
                                         break;
                                     case "REMOVE":
                                         //client remove
@@ -156,22 +163,35 @@ public class Controller {
         System.out.println("Command sent: STORE_TO");
     }
 
-    private static void loadFile(PrintWriter out, int fileSize){
-        String message = "LOAD_FROM ";
+    private static void loadFile(PrintWriter out, int port, String fileName){
+        int fileSize;
 
-        if(dstoreExists()){
-            message = message + dstoreList.get(0) + " " + fileSize;
-            System.out.println("Command sent: LOAD_FROM");
-        } else {
-            message = "ERROR_NOT_ENOUGH_DSTORES";
-            System.out.println("Command sent: ERROR_NOT_ENOUGH_DSTORES");
+        if(!index.fileExists(fileName)){
+            errorFileDoesNotExist(out);
         }
 
-        out.println(message);
+        fileSize = index.getFileSize(fileName);
+        out.println("LOAD_FROM " + port + " " + fileSize);
+        System.out.println("Command sent: LOAD_FROM");
     }
 
-    private static boolean dstoreExists(){
-        return dstoreList.size() > 0;
+    private static int getPort(int index){
+        return dstoreList.get(index);
+    }
+
+    private static void errorNotEnoughDstores(PrintWriter out){
+        out.println("ERROR_NOT_ENOUGH_DSTORES");
+        System.out.println("Command sent: ERROR_NOT_ENOUGH_DSTORES");
+    }
+
+    private static void errorFileAlreadyExists(PrintWriter out){
+        out.println("ERROR_FILE_ALREADY_EXISTS");
+        System.out.println("Command sent: ERROR_FILE_ALREADY_EXISTS");
+    }
+
+    private static void errorFileDoesNotExist(PrintWriter out){
+        out.print("ERROR_FILE_DOES_NOT_EXIST");
+        System.out.println("Command sent: ERROR_FILE_DOES_NOT_EXIST");
     }
 
     private static void rebalance(){
