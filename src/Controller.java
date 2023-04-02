@@ -56,7 +56,6 @@ public class Controller {
                                             } else{
                                                 errorNotEnoughDstores(out);
                                             }
-
                                         }
                                         break;
                                     case "STORE":
@@ -77,7 +76,7 @@ public class Controller {
                                         break;
                                     case "LOAD":
                                         //client load
-                                        if(dstoreList.size() != 0){
+                                        if(enoughDstores()){
                                             loadFile(out, getPort(portIndex), message[1]);
                                         } else{
                                             errorNotEnoughDstores(out);
@@ -95,6 +94,12 @@ public class Controller {
                                         break;
                                     case "REMOVE":
                                         //client remove
+                                        if(enoughDstores()){
+                                            removeFile(out, message[1]);
+                                        } else{
+                                            errorNotEnoughDstores(out);
+                                        }
+
                                         break;
                                     case "ACK":
                                         //dstore ack
@@ -130,10 +135,18 @@ public class Controller {
 
     }
 
+    /**
+     * Checks if there is enough Dstores relative to R
+     * @return
+     */
     private static boolean enoughDstores(){
         return dstoreList.size() >= r;
     }
 
+    /**
+     * Sends a List message with all the different files stored
+     * @param out Print writer
+     */
     private static void listFiles(PrintWriter out){
         String message = "LIST ";
         ArrayList<String> fileNames = index.getFileNames();
@@ -163,6 +176,12 @@ public class Controller {
         System.out.println("Command sent: STORE_TO");
     }
 
+    /**
+     * Loads a file for the client from a given Dstore (port)
+     * @param out Print writer
+     * @param port Dstore port
+     * @param fileName File name
+     */
     private static void loadFile(PrintWriter out, int port, String fileName){
         int fileSize;
 
@@ -177,6 +196,25 @@ public class Controller {
 
     private static int getPort(int index){
         return dstoreList.get(index);
+    }
+
+    /**
+     * Removes a file with a given name from all Dstores
+     * @param out Print writer
+     * @param fileName File name
+     */
+    private static void removeFile(PrintWriter out, String fileName){
+        if(index.fileExists(fileName)){
+            for(Integer dstorePort : dstoreList){
+                try{
+                    Socket dstoreSocket = new Socket(InetAddress.getLoopbackAddress(),dstorePort);
+                    PrintWriter dstoreWriter = new PrintWriter(dstoreSocket.getOutputStream(), true);
+                    dstoreWriter.println("REMOVE " + fileName);
+                } catch(Exception e){System.out.println("Error " + e);}
+            }
+        } else{
+            errorFileDoesNotExist(out);
+        }
     }
 
     private static void errorNotEnoughDstores(PrintWriter out){

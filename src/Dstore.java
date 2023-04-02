@@ -59,6 +59,9 @@ public class Dstore {
                                         break;
                                     case "LOAD_DATA":
                                         loadFile(client.getOutputStream(), message[1]);
+                                        break;
+                                    case "REMOVE_ACK":
+                                        removeFile(cOut, message[1]);
                                 }
                             }
                         } catch (Exception e){}
@@ -103,11 +106,33 @@ public class Dstore {
         } catch (Exception e){System.out.println("Error " + e);}
     }
 
+    /**
+     * Sends the bytes of a given file from the file path
+     * @param out Output stream
+     * @param fileName File name
+     */
     private static void loadFile(OutputStream out, String fileName){
         try{
             byte[] buf = Files.readAllBytes(Path.of(filePath + "/" + fileName));
             out.write(buf, 0, buf.length);
         } catch (Exception e){System.out.println("Error " + e);}
+    }
+
+    /**
+     * Removes a file from the store
+     * @param out Print writer
+     * @param fileName File name
+     */
+    private static void removeFile(PrintWriter out, String fileName){
+        File toDelete = new File(filePath + "/" + fileName);
+
+        if(toDelete.exists() && toDelete.isFile()){
+            if(toDelete.delete()){
+                out.println("REMOVE_ACK " + fileName);
+            }
+        } else{
+            out.println("ERROR_FILE_DOES_NOT_EXIST " + fileName);
+        }
     }
 
 }
