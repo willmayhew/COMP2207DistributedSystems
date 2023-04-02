@@ -5,6 +5,7 @@ public class Index {
 
     //(File name, File state)
     HashMap<String,Boolean> fileStates = new HashMap<>();
+    //(File name, File size)
     HashMap<String,Integer> fileSizes = new HashMap<>();
 
     /**
@@ -41,6 +42,15 @@ public class Index {
      */
     public ArrayList<String> getFileNames(){
         return new ArrayList<>(fileSizes.keySet());
+    }
+
+    /**
+     * Gets the file size of a given file
+     * @param fileName File name
+     * @return File size
+     */
+    public int getFileSize(String fileName){
+        return fileSizes.get(fileName);
     }
 
 }

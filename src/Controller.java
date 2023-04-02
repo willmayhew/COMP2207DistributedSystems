@@ -52,7 +52,7 @@ public class Controller {
                                                 listFiles(out);
                                             } else{
                                                 out.println("ERROR_NOT_ENOUGH_DSTORES");
-                                                System.out.println("Error - Not enough Dstores");
+                                                System.out.println("Command sent: ERROR_NOT_ENOUGH_DSTORES");
                                             }
 
                                         }
@@ -67,16 +67,18 @@ public class Controller {
                                                     store(out, message[1], Integer.parseInt(message[2]));
                                                 } else{
                                                     out.println("ERROR_FILE_ALREADY_EXISTS");
-                                                    System.out.println("Error - File already exists");
+                                                    System.out.println("Command sent: ERROR_FILE_ALREADY_EXISTS");
                                                 }
                                             } else{
                                                 out.println("ERROR_NOT_ENOUGH_DSTORES");
-                                                System.out.println("Error - Not enough dstores");
+                                                System.out.println("Command sent: ERROR_NOT_ENOUGH_DSTORES");
                                             }
                                         }
                                         break;
                                     case "LOAD":
                                         //client load
+                                        int fileSize = index.getFileSize(message[1]);
+                                        loadFile(out, fileSize);
                                         break;
                                     case "LOAD_DATA":
                                         //client load data
@@ -93,6 +95,7 @@ public class Controller {
                                     case "STORE_ACK":
                                         //dstore store ack
                                         out.println("STORE_COMPLETE");
+                                        System.out.println("Command sent: STORE_COMPLETE");
                                         break;
                                     case "REMOVE_ACK":
                                         //dstore remove ack
@@ -125,13 +128,14 @@ public class Controller {
     }
 
     private static void listFiles(PrintWriter out){
-        String message = "LIST";
+        String message = "LIST ";
         ArrayList<String> fileNames = index.getFileNames();
         for(String fileName : fileNames){
             message = message + fileName + " ";
         }
 
         out.println(message);
+        System.out.println("Command sent: LIST");
     }
 
     /**
@@ -144,11 +148,30 @@ public class Controller {
         index.addFile(filename,filesize);
         System.out.println("Index Update: " + filename + " Stored");
 
-        String message = "STORE_TO";
+        String message = "STORE_TO ";
         for(int i=0; i<dstoreList.size(); i++){
             message = message + dstoreList.get(i) + " ";
         }
         out.println(message);
+        System.out.println("Command sent: STORE_TO");
+    }
+
+    private static void loadFile(PrintWriter out, int fileSize){
+        String message = "LOAD_FROM ";
+
+        if(dstoreExists()){
+            message = message + dstoreList.get(0) + " " + fileSize;
+            System.out.println("Command sent: LOAD_FROM");
+        } else {
+            message = "ERROR_NOT_ENOUGH_DSTORES";
+            System.out.println("Command sent: ERROR_NOT_ENOUGH_DSTORES");
+        }
+
+        out.println(message);
+    }
+
+    private static boolean dstoreExists(){
+        return dstoreList.size() > 0;
     }
 
     private static void rebalance(){
