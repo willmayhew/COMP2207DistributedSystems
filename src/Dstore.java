@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -52,19 +53,21 @@ public class Dstore {
                                     case "STORE":
                                         fileName = message[1];
                                         fileSize = Integer.parseInt(message[2]);
+                                        client.setSoTimeout(timeout);
                                         sendACK(out);
                                         storeFile(client.getInputStream());
-                                        client.setSoTimeout(timeout);
                                         sendStoreACK(cOut, fileName);
                                         break;
                                     case "LOAD_DATA":
                                         loadFile(client.getOutputStream(), message[1]);
                                         break;
-                                    case "REMOVE_ACK":
+                                    case "REMOVE":
                                         removeFile(cOut, message[1]);
+                                        break;
                                 }
                             }
-                        } catch (Exception e){}
+                        } catch (SocketTimeoutException e){System.out.println("Socket timeout");}
+                        catch (Exception e){System.out.println("Error " + e);}
                     }).start();
                 }
 
@@ -127,11 +130,11 @@ public class Dstore {
         File toDelete = new File(filePath + "/" + fileName);
 
         if(toDelete.exists() && toDelete.isFile()){
-            if(toDelete.delete()){
-                out.println("REMOVE_ACK " + fileName);
-            }
+            toDelete.delete();
+            out.println("REMOVE_ACK " + fileName);
+            System.out.println("Command sent: REMOVE_ACK");
         } else{
-            out.println("ERROR_FILE_DOES_NOT_EXIST " + fileName);
+            Errors.errorFileDoesNotExist(out);
         }
     }
 
