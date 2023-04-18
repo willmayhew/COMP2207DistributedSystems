@@ -8,14 +8,17 @@ public class Index {
     //(File name, File size)
     HashMap<String,Integer> fileSizes = new HashMap<>();
 
+    public void removeFromIndex(String fileName){
+        fileStates.remove(fileName);
+        fileSizes.remove(fileName);
+    }
 
     /**
      * Updates the state of a file
      * @param fileName File name
-     * @param state State to be updated to
      */
-    public void updateState(String fileName, String state){
-        fileStates.put(fileName,state);
+    public void resetState(String fileName){
+        fileStates.put(fileName,"store complete");
     }
 
     /**
@@ -67,6 +70,21 @@ public class Index {
     }
 
     /**
+     * Checks if a file in the index is removed
+     * @param fileName File name
+     * @return Boolean
+     */
+    public boolean isFileRemoved(String fileName){
+        String state = fileStates.get(fileName);
+        return state != null && state.equals("remove complete");
+    }
+
+    public boolean isFileStored(String fileName){
+        String state = fileStates.get(fileName);
+        return state != null && state.equals("store complete");
+    }
+
+    /**
      * Gets all file names in the index
      * @return List of file names
      */
@@ -92,8 +110,18 @@ public class Index {
      * @param fileName File name
      * @return boolean for file is busy
      */
-    public boolean fileBusy(String fileName){
+    public boolean isFileBusy(String fileName){
         String fileState = getFileState(fileName);
         return fileState != null && (fileState.equals("remove in progress") || fileState.equals("store in progress"));
+    }
+
+    public boolean canStore(String fileName){
+        String fileState = getFileState(fileName);
+        return fileState == null || isFileRemoved(fileName);
+    }
+
+    public boolean canRemove(String fileName){
+        String fileState = getFileState(fileName);
+        return fileState != null && isFileStored(fileName);
     }
 }
